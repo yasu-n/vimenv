@@ -38,10 +38,23 @@ realpath() {
   cd "$cwd"
 }
 
-shopt -s nullglob
-for path in ${RBENV_HOOK_PATH//:/$'\n'}; do
-  for script in $path/"$RBENV_COMMAND"/*.bash; do
-    echo $(realpath $script)
+IFS=: hook_paths=($RBENV_HOOK_PATH)
+length="${#hook_paths[@]}"
+pad_size="${#length}"
+index=0
+
+# Sort hooks alphabetically by filename first, then by the order of
+# their parent directory in $RBENV_HOOK_PATH when there are
+# duplicates. Sorting affords a primitive but useful level of control
+# over the order in which a hook runs relative to other hooks.
+
+{ shopt -s nullglob
+  for path in "${hook_paths[@]}"; do
+    index=$(( $index + 1 ))
+    for script in "${path}/${RBENV_COMMAND}"/*.bash; do
+      printf "%s:%*d:%s\n" "${script##*/}" \
+        "$pad_size" "$index" "$(realpath "$script")"
+    done
   done
-done
-shopt -u nullglob
+  shopt -u nullglob
+} | sort | awk -F : '{print $3}'
