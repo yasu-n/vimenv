@@ -19,25 +19,6 @@ if [ -z "$RBENV_COMMAND" ]; then
   exit 1
 fi
 
-resolve_link() {
-  $(type -p greadlink readlink | head -1) $1
-}
-
-realpath() {
-  local cwd="$(pwd)"
-  local base="$(basename $1)"
-  local path="$1"
-
-  while [ -n "$path" ]; do
-    cd "${path%/*}"
-    local name="${path##*/}"
-    path="$(resolve_link "$name" || true)"
-  done
-
-  echo "$(pwd)/$base"
-  cd "$cwd"
-}
-
 IFS=: hook_paths=($RBENV_HOOK_PATH)
 length="${#hook_paths[@]}"
 pad_size="${#length}"
@@ -53,7 +34,7 @@ index=0
     index=$(( $index + 1 ))
     for script in "${path}/${RBENV_COMMAND}"/*.bash; do
       printf "%s:%*d:%s\n" "${script##*/}" \
-        "$pad_size" "$index" "$(realpath "$script")"
+        "$pad_size" "$index" "$script"
     done
   done
   shopt -u nullglob
