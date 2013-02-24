@@ -32,8 +32,7 @@ fi
 RBENV_COMMAND_PATH="$(rbenv-which "$RBENV_COMMAND")"
 RBENV_BIN_PATH="${RBENV_COMMAND_PATH%/*}"
 
-IFS=$'\n' scripts=(`rbenv-hooks exec`)
-for script in "${scripts[@]}"; do
+rbenv-hooks exec | while IFS=$'\n' read script; do
   source "$script"
 done
 

@@ -140,8 +140,7 @@ make_shims ../versions/*/bin/*
 cd "$OLDPWD"
 
 # Allow plugins to register shims.
-IFS=$'\n' scripts=(`rbenv-hooks rehash`)
-for script in "${scripts[@]}"; do
+rbenv-hooks rehash | while IFS=$'\n' read script; do
   source "$script"
 done
 

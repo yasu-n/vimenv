@@ -63,8 +63,7 @@ else
   RBENV_COMMAND_PATH="${RBENV_ROOT}/versions/${RBENV_VERSION}/bin/${RBENV_COMMAND}"
 fi
 
-IFS=$'\n' scripts=(`rbenv-hooks which`)
-for script in "${scripts[@]}"; do
+rbenv-hooks which | while IFS=$'\n' read script; do
   source "$script"
 done
 
