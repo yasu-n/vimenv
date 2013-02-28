@@ -63,9 +63,9 @@ else
   RBENV_COMMAND_PATH="${RBENV_ROOT}/versions/${RBENV_VERSION}/bin/${RBENV_COMMAND}"
 fi
 
-rbenv-hooks which | while IFS=$'\n' read script; do
+while IFS=$'\n' read script; do
   source "$script"
-done
+done < <(rbenv-hooks which)
 
 if [ -x "$RBENV_COMMAND_PATH" ]; then
   echo "$RBENV_COMMAND_PATH"

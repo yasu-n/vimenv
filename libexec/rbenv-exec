@@ -32,9 +32,9 @@ fi
 RBENV_COMMAND_PATH="$(rbenv-which "$RBENV_COMMAND")"
 RBENV_BIN_PATH="${RBENV_COMMAND_PATH%/*}"
 
-rbenv-hooks exec | while IFS=$'\n' read script; do
+while IFS=$'\n' read script; do
   source "$script"
-done
+done < <(rbenv-hooks exec)
 
 shift 1
 if [ "$RBENV_VERSION" != "system" ]; then
