@@ -2,17 +2,17 @@
 #
 # Summary: Display the full path to an executable
 #
-# Usage: rbenv which <command>
+# Usage: vimenv which <command>
 #
-# Displays the full path to the executable that rbenv will invoke when
+# Displays the full path to the executable that vimenv will invoke when
 # you run the given command.
 
 set -e
-[ -n "$RBENV_DEBUG" ] && set -x
+[ -n "$VIMENV_DEBUG" ] && set -x
 
-# Provide rbenv completions
+# Provide vimenv completions
 if [ "$1" = "--complete" ]; then
-  exec rbenv shims --short
+  exec vimenv shims --short
 fi
 
 expand_path() {
@@ -48,31 +48,31 @@ remove_from_path() {
   echo "${result%:}"
 }
 
-RBENV_VERSION="$(rbenv-version-name)"
-RBENV_COMMAND="$1"
+VIMENV_VERSION="$(vimenv-version-name)"
+VIMENV_COMMAND="$1"
 
-if [ -z "$RBENV_COMMAND" ]; then
-  rbenv-help --usage which >&2
+if [ -z "$VIMENV_COMMAND" ]; then
+  vimenv-help --usage which >&2
   exit 1
 fi
 
-if [ "$RBENV_VERSION" = "system" ]; then
-  PATH="$(remove_from_path "${RBENV_ROOT}/shims")"
-  RBENV_COMMAND_PATH="$(command -v "$RBENV_COMMAND" || true)"
+if [ "$VIMENV_VERSION" = "system" ]; then
+  PATH="$(remove_from_path "${VIMENV_ROOT}/shims")"
+  VIMENV_COMMAND_PATH="$(command -v "$VIMENV_COMMAND" || true)"
 else
-  RBENV_COMMAND_PATH="${RBENV_ROOT}/versions/${RBENV_VERSION}/bin/${RBENV_COMMAND}"
+  VIMENV_COMMAND_PATH="${VIMENV_ROOT}/versions/${VIMENV_VERSION}/bin/${VIMENV_COMMAND}"
 fi
 
-for script in $(rbenv-hooks which); do
+for script in $(vimenv-hooks which); do
   source "$script"
 done
 
-if [ -x "$RBENV_COMMAND_PATH" ]; then
-  echo "$RBENV_COMMAND_PATH"
+if [ -x "$VIMENV_COMMAND_PATH" ]; then
+  echo "$VIMENV_COMMAND_PATH"
 else
-  echo "rbenv: $RBENV_COMMAND: command not found" >&2
+  echo "vimenv: $VIMENV_COMMAND: command not found" >&2
 
-  versions="$(rbenv-whence "$RBENV_COMMAND" || true)"
+  versions="$(vimenv-whence "$VIMENV_COMMAND" || true)"
   if [ -n "$versions" ]; then
     { echo
       echo "The \`$1' command exists in these Ruby versions:"

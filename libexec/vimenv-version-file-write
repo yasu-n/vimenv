@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Usage: vimenv version-file-write <file> <version>
+
+set -e
+[ -n "$VIMENV_DEBUG" ] && set -x
+
+VIMENV_VERSION_FILE="$1"
+VIMENV_VERSION="$2"
+
+if [ -z "$VIMENV_VERSION" ] || [ -z "$VIMENV_VERSION_FILE" ]; then
+  vimenv-help --usage version-file-write >&2
+  exit 1
+fi
+
+# Make sure the specified version is installed.
+vimenv-prefix "$VIMENV_VERSION" >/dev/null
+
+# Write the version out to disk.
+echo "$VIMENV_VERSION" > "$VIMENV_VERSION_FILE"

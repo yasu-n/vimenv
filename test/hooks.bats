@@ -8,42 +8,42 @@ create_hook() {
 }
 
 @test "prints usage help given no argument" {
-  run rbenv-hooks
-  assert_failure "Usage: rbenv hooks <command>"
+  run vimenv-hooks
+  assert_failure "Usage: vimenv hooks <command>"
 }
 
 @test "prints list of hooks" {
-  path1="${RBENV_TEST_DIR}/rbenv.d"
-  path2="${RBENV_TEST_DIR}/etc/rbenv_hooks"
+  path1="${VIMENV_TEST_DIR}/vimenv.d"
+  path2="${VIMENV_TEST_DIR}/etc/vimenv_hooks"
   create_hook "$path1" exec "hello.bash"
   create_hook "$path1" exec "ahoy.bash"
   create_hook "$path1" exec "invalid.sh"
   create_hook "$path1" which "boom.bash"
   create_hook "$path2" exec "bueno.bash"
 
-  RBENV_HOOK_PATH="$path1:$path2" run rbenv-hooks exec
+  VIMENV_HOOK_PATH="$path1:$path2" run vimenv-hooks exec
   assert_success
-  assert_line 0 "${RBENV_TEST_DIR}/rbenv.d/exec/ahoy.bash"
-  assert_line 1 "${RBENV_TEST_DIR}/rbenv.d/exec/hello.bash"
-  assert_line 2 "${RBENV_TEST_DIR}/etc/rbenv_hooks/exec/bueno.bash"
+  assert_line 0 "${VIMENV_TEST_DIR}/vimenv.d/exec/ahoy.bash"
+  assert_line 1 "${VIMENV_TEST_DIR}/vimenv.d/exec/hello.bash"
+  assert_line 2 "${VIMENV_TEST_DIR}/etc/vimenv_hooks/exec/bueno.bash"
 }
 
 @test "resolves relative paths" {
-  path="${RBENV_TEST_DIR}/rbenv.d"
+  path="${VIMENV_TEST_DIR}/vimenv.d"
   create_hook "$path" exec "hello.bash"
   mkdir -p "$HOME"
 
-  RBENV_HOOK_PATH="${HOME}/../rbenv.d" run rbenv-hooks exec
-  assert_success "${RBENV_TEST_DIR}/rbenv.d/exec/hello.bash"
+  VIMENV_HOOK_PATH="${HOME}/../vimenv.d" run vimenv-hooks exec
+  assert_success "${VIMENV_TEST_DIR}/vimenv.d/exec/hello.bash"
 }
 
 @test "resolves symlinks" {
-  path="${RBENV_TEST_DIR}/rbenv.d"
+  path="${VIMENV_TEST_DIR}/vimenv.d"
   mkdir -p "${path}/exec"
   mkdir -p "$HOME"
   touch "${HOME}/hola.bash"
   ln -s "../../home/hola.bash" "${path}/exec/hello.bash"
 
-  RBENV_HOOK_PATH="$path" run rbenv-hooks exec
+  VIMENV_HOOK_PATH="$path" run vimenv-hooks exec
   assert_success "${HOME}/hola.bash"
 }

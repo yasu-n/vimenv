@@ -3,44 +3,44 @@
 load test_helper
 
 @test "creates shims and versions directories" {
-  assert [ ! -d "${RBENV_ROOT}/shims" ]
-  assert [ ! -d "${RBENV_ROOT}/versions" ]
-  run rbenv-init -
+  assert [ ! -d "${VIMENV_ROOT}/shims" ]
+  assert [ ! -d "${VIMENV_ROOT}/versions" ]
+  run vimenv-init -
   assert_success
-  assert [ -d "${RBENV_ROOT}/shims" ]
-  assert [ -d "${RBENV_ROOT}/versions" ]
+  assert [ -d "${VIMENV_ROOT}/shims" ]
+  assert [ -d "${VIMENV_ROOT}/versions" ]
 }
 
 @test "auto rehash" {
-  run rbenv-init -
+  run vimenv-init -
   assert_success
-  assert_line "rbenv rehash 2>/dev/null"
+  assert_line "vimenv rehash 2>/dev/null"
 }
 
 @test "setup shell completions" {
   export SHELL=/bin/bash
   root="$(cd $BATS_TEST_DIRNAME/.. && pwd)"
-  run rbenv-init -
+  run vimenv-init -
   assert_success
-  assert_line 'source "'${root}'/libexec/../completions/rbenv.bash"'
+  assert_line 'source "'${root}'/libexec/../completions/vimenv.bash"'
 }
 
 @test "option to skip rehash" {
-  run rbenv-init - --no-rehash
+  run vimenv-init - --no-rehash
   assert_success
-  refute_line "rbenv rehash 2>/dev/null"
+  refute_line "vimenv rehash 2>/dev/null"
 }
 
 @test "adds shims to PATH" {
   export PATH="${BATS_TEST_DIRNAME}/../libexec:/usr/bin:/bin"
-  run rbenv-init -
+  run vimenv-init -
   assert_success
-  assert_line 0 'export PATH="'${RBENV_ROOT}'/shims:${PATH}"'
+  assert_line 0 'export PATH="'${VIMENV_ROOT}'/shims:${PATH}"'
 }
 
 @test "doesn't add shims to PATH more than once" {
-  export PATH="${RBENV_ROOT}/shims:$PATH"
-  run rbenv-init -
+  export PATH="${VIMENV_ROOT}/shims:$PATH"
+  run vimenv-init -
   assert_success
-  refute_line 'export PATH="'${RBENV_ROOT}'/shims:${PATH}"'
+  refute_line 'export PATH="'${VIMENV_ROOT}'/shims:${PATH}"'
 }

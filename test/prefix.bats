@@ -3,23 +3,23 @@
 load test_helper
 
 @test "prefix" {
-  mkdir -p "${RBENV_TEST_DIR}/myproject"
-  cd "${RBENV_TEST_DIR}/myproject"
-  echo "1.2.3" > .ruby-version
-  mkdir -p "${RBENV_ROOT}/versions/1.2.3"
-  run rbenv-prefix
-  assert_success "${RBENV_ROOT}/versions/1.2.3"
+  mkdir -p "${VIMENV_TEST_DIR}/myproject"
+  cd "${VIMENV_TEST_DIR}/myproject"
+  echo "1.2.3" > .vim-version
+  mkdir -p "${VIMENV_ROOT}/versions/1.2.3"
+  run vimenv-prefix
+  assert_success "${VIMENV_ROOT}/versions/1.2.3"
 }
 
 @test "prefix for invalid version" {
-  RBENV_VERSION="1.2.3" run rbenv-prefix
-  assert_failure "rbenv: version \`1.2.3' not installed"
+  VIMENV_VERSION="1.2.3" run vimenv-prefix
+  assert_failure "vimenv: version \`1.2.3' not installed"
 }
 
 @test "prefix for system" {
-  mkdir -p "${RBENV_TEST_DIR}/bin"
-  touch "${RBENV_TEST_DIR}/bin/ruby"
-  chmod +x "${RBENV_TEST_DIR}/bin/ruby"
-  RBENV_VERSION="system" run rbenv-prefix
-  assert_success "$RBENV_TEST_DIR"
+  mkdir -p "${VIMENV_TEST_DIR}/bin"
+  touch "${VIMENV_TEST_DIR}/bin/vim"
+  chmod +x "${VIMENV_TEST_DIR}/bin/vim"
+  VIMENV_VERSION="system" run vimenv-prefix
+  assert_success "$VIMENV_TEST_DIR"
 }

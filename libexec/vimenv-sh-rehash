@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -e
+[ -n "$VIMENV_DEBUG" ] && set -x
+
+# Provide vimenv completions
+if [ "$1" = "--complete" ]; then
+  exec vimenv-rehash --complete
+fi
+
+# When vimenv shell integration is enabled, delegate to vimenv-rehash,
+# then tell the shell to empty its command lookup cache.
+vimenv-rehash
+echo "hash -r 2>/dev/null || true"

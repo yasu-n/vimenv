@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+#
+# Summary: Set or show the global Ruby version
+#
+# Usage: vimenv global <version>
+#
+# Sets the global Ruby version. You can override the global version at
+# any time by setting a directory-specific version with `vimenv local'
+# or by setting the `VIMENV_VERSION' environment variable.
+#
+# <version> should be a string matching a Ruby version known to vimenv.
+# The special version string `system' will use your default system Ruby.
+# Run `vimenv versions' for a list of available Ruby versions.
+
+set -e
+[ -n "$VIMENV_DEBUG" ] && set -x
+
+# Provide vimenv completions
+if [ "$1" = "--complete" ]; then
+  echo system
+  exec vimenv-versions --bare
+fi
+
+VIMENV_VERSION="$1"
+VIMENV_VERSION_FILE="${VIMENV_ROOT}/version"
+
+if [ -n "$VIMENV_VERSION" ]; then
+  vimenv-version-file-write "$VIMENV_VERSION_FILE" "$VIMENV_VERSION"
+else
+  vimenv-version-file-read "$VIMENV_VERSION_FILE" ||
+  vimenv-version-file-read "${VIMENV_ROOT}/global" ||
+  vimenv-version-file-read "${VIMENV_ROOT}/default" ||
+  echo system
+fi

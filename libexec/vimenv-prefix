@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Summary: Display prefix for a Ruby version
+# Usage: vimenv prefix [<version>]
+#
+# Displays the directory where a Ruby version is installed. If no
+# version is given, `vimenv prefix' displays the location of the
+# currently selected version.
+
+set -e
+[ -n "$VIMENV_DEBUG" ] && set -x
+
+# Provide vimenv completions
+if [ "$1" = "--complete" ]; then
+  echo system
+  exec vimenv-versions --bare
+fi
+
+if [ -n "$1" ]; then
+  export VIMENV_VERSION="$1"
+elif [ -z "$VIMENV_VERSION" ]; then
+  VIMENV_VERSION="$(vimenv-version-name)"
+fi
+
+if [ "$VIMENV_VERSION" = "system" ]; then
+  RUBY_PATH="$(vimenv-which ruby)"
+  RUBY_PATH="${RUBY_PATH%/*}"
+  echo "${RUBY_PATH%/bin}"
+  exit
+fi
+
+VIMENV_PREFIX_PATH="${VIMENV_ROOT}/versions/${VIMENV_VERSION}"
+if [ ! -d "$VIMENV_PREFIX_PATH" ]; then
+  echo "vimenv: version \`${VIMENV_VERSION}' not installed" >&2
+  exit 1
+fi
+
+echo "$VIMENV_PREFIX_PATH"

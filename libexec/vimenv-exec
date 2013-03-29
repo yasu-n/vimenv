@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+#
+# Summary: Run an executable with the selected Ruby version
+#
+# Usage: vimenv exec <command> [arg1 arg2...]
+#
+# Runs an executable by first preparing PATH so that the selected Ruby
+# version's `bin' directory is at the front.
+#
+# For example, if the currently selected Ruby version is 1.9.3-p327:
+#   vimenv exec bundle install
+#
+# is equivalent to:
+#   PATH="$VIMENV_ROOT/versions/1.9.3-p327/bin:$PATH" bundle install
+
+set -e
+[ -n "$VIMENV_DEBUG" ] && set -x
+
+# Provide vimenv completions
+if [ "$1" = "--complete" ]; then
+  exec vimenv shims --short
+fi
+
+export VIMENV_VERSION="$(vimenv-version-name)"
+VIMENV_COMMAND="$1"
+
+if [ -z "$VIMENV_COMMAND" ]; then
+  vimenv-help --usage exec >&2
+  exit 1
+fi
+
+VIMENV_COMMAND_PATH="$(vimenv-which "$VIMENV_COMMAND")"
+VIMENV_BIN_PATH="${VIMENV_COMMAND_PATH%/*}"
+
+for script in $(vimenv-hooks exec); do
+  source "$script"
+done
+
+shift 1
+if [ "$VIMENV_VERSION" != "system" ]; then
+  export PATH="${VIMENV_BIN_PATH}:${PATH}"
+fi
+exec -a "$VIMENV_COMMAND" "$VIMENV_COMMAND_PATH" "$@"

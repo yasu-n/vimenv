@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Summary: List hook scripts for a given rbenv command
-# Usage: rbenv hooks <command>
+# Summary: List hook scripts for a given vimenv command
+# Usage: vimenv hooks <command>
 
 set -e
-[ -n "$RBENV_DEBUG" ] && set -x
+[ -n "$VIMENV_DEBUG" ] && set -x
 
-# Provide rbenv completions
+# Provide vimenv completions
 if [ "$1" = "--complete" ]; then
   echo exec
   echo rehash
@@ -13,9 +13,9 @@ if [ "$1" = "--complete" ]; then
   exit
 fi
 
-RBENV_COMMAND="$1"
-if [ -z "$RBENV_COMMAND" ]; then
-  rbenv-help --usage hooks >&2
+VIMENV_COMMAND="$1"
+if [ -z "$VIMENV_COMMAND" ]; then
+  vimenv-help --usage hooks >&2
   exit 1
 fi
 
@@ -38,8 +38,8 @@ realpath() {
 }
 
 shopt -s nullglob
-for path in ${RBENV_HOOK_PATH//:/$'\n'}; do
-  for script in $path/"$RBENV_COMMAND"/*.bash; do
+for path in ${VIMENV_HOOK_PATH//:/$'\n'}; do
+  for script in $path/"$VIMENV_COMMAND"/*.bash; do
     echo $(realpath $script)
   done
 done
