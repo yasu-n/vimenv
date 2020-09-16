@@ -82,9 +82,9 @@ fi
 
 mkdir -p "${VIMENV_ROOT}/"{shims,versions}
 
-# if [[ ":${PATH}:" != *:"${VIMENV_ROOT}/shims":* ]]; then
-#   echo 'export PATH="'${VIMENV_ROOT}'/shims:${PATH}"'
-# fi
+if [[ ":${PATH}:" != *:"${VIMENV_ROOT}/shims":* ]]; then
+  echo 'export PATH="'${VIMENV_ROOT}'/shims:${PATH}"'
+fi
 
 case "$shell" in
 bash | zsh )
