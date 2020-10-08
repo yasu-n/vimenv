@@ -10,21 +10,17 @@ PROTOTYPE_SHIM_PATH="${SHIM_PATH}/.vimenv-shim"
 # Create the shims directory if it doesn't already exist.
 mkdir -p "$SHIM_PATH"
 
-# Ensure only one instance of vimenv-rehash is running at a time by
-# setting the shell's `noclobber` option and attempting to write to
-# the prototype shim file. If the file already exists, print a warning
-# to stderr and exit with a non-zero status.
-set -o noclobber
-{ echo > "$PROTOTYPE_SHIM_PATH"
-} 2>/dev/null ||
-{ if [ -w "$SHIM_PATH" ]; then
-    echo "vimenv: cannot rehash: $PROTOTYPE_SHIM_PATH exists"
-  else
-    echo "vimenv: cannot rehash: $SHIM_PATH isn't writable"
-  fi
-  exit 1
-} >&2
-set +o noclobber
+acquire_lock() {
+  # Ensure only one instance of vimenv-rehash is running at a time by
+  # setting the shell's `noclobber` option and attempting to write to
+  # the prototype shim file. If the file already exists, print a warning
+  # to stderr and exit with a non-zero status.
+  local ret
+  set -o noclobber
+  echo > "$PROTOTYPE_SHIM_PATH" 2>| /dev/null || ret=1
+  set +o noclobber
+  [ -z "${ret}" ]
+}
 
 # If we were able to obtain a lock, register a trap to clean up the
 # prototype shim when the process exits.
@@ -33,6 +29,31 @@ trap remove_prototype_shim EXIT
 remove_prototype_shim() {
   rm -f "$PROTOTYPE_SHIM_PATH"
 }
+
+release_lock() {
+  remove_prototype_shim
+}
+
+if [! -w "$SHIM_PATH" ]; then
+  echo "vimenv: cannot rehash: $SHIM_PATH isn't writable"
+  exit 1
+fi
+
+unset acquired
+for (( i=1; i<="${VIMENV_REHASH_TIMEOUT:-60}"; i++ )); do
+  if acquire_lock 2>/dev/null; then
+    acquired=1
+    break
+  else
+    # POSIX sleep(1) doesn't provides time percision of subsecond
+    sleep 1
+  fi
+done
+
+if [ -z "${acquired}" ]; then
+  echo "vimenv: cannot rehash: $PROTOTYPE_SHIM_PATH exisits"
+  exit 1
+fi
 
 # The prototype shim file is a script that re-execs itself, passing
 # its filename and any arguments to `vimenv exec`. This file is
@@ -46,7 +67,7 @@ set -e
 [ -n "\$VIMENV_DEBUG" ] && set -x
 
 program="\${0##*/}"
-if [ "\$program" = "ruby" ]; then
+if [ "\$program" = "vim" ]; then
   for arg; do
     case "\$arg" in
     -e* | -- ) break ;;
@@ -78,41 +99,41 @@ remove_outdated_shims() {
   done
 }
 
+# List basenames of executables for every Vim version
+list_executable_names() {
+  local version file
+  vimenv-versions --bare --skip-aliases | \
+  while read -r version; do
+    for file in "${VIMENV_ROOT}/versions/${version}/bin/"*; do
+      echo "${file##*/}"
+    done
+  done
+}
+
 # The basename of each argument passed to `make_shims` will be
 # registered for installation as a shim. In this way, plugins may call
 # `make_shims` with a glob to register many shims at once.
 make_shims() {
   local shims="$@"
-
-  for file in $shims; do
-    local shim="${file##*/}"
+  for file; do
+    shim="${file##*/}"
     register_shim "$shim"
   done
 }
 
-# Create an empty array for the list of registered shims and an empty
-# string to use as a search index.
-registered_shims=()
-registered_shims_index=""
+registered_shims=" "
 
-# We will keep track of shims registered for installation with the
-# global `registered_shims` array and with a global search index
-# string. The array will let us iterate over all registered shims. The
-# index string will let us quickly check whether a shim with the given
-# name has been registered or not.
+# Registers the name of a shim to be generated.
 register_shim() {
-  local shim="$@"
-  registered_shims["${#registered_shims[@]}"]="$shim"
-  registered_shims_index="$registered_shims_index/$shim/"
+  registered_shims="${registered_shims}${1} "
 }
 
-# To install all the registered shims, we iterate over the
-# `registered_shims` array and create a link if one does not already
-# exist.
+# Install all the shims registered via 'make_shims' or 'register_shim' directly.
 install_registered_shims() {
-  local shim
-  for shim in "${registered_shims[@]}"; do
-    [ -e "$shim" ] || ln -f "$PROTOTYPE_SHIM_PATH" "$shim"
+  local shim file
+  for shim in $registered_shims; do
+    file="${SHIM_PATH}/${shim}"
+    [ -e "$shim" ] || cp "$PROTOTYPE_SHIM_PATH" "$file"
   done
 }
 
@@ -122,8 +143,8 @@ install_registered_shims() {
 # removed.
 remove_stale_shims() {
   local shim
-  for shim in *; do
-    if [[ "$registered_shims_index" != *"/$shim/"* ]]; then
+  for shim in "$SHIM_PATH"; do
+    if [[ "$registered_shims" != *" ${shim##*/}"* ]]; then
       rm -f "$shim"
     fi
   done
@@ -131,25 +152,22 @@ remove_stale_shims() {
 
 
 # Change to the shims directory.
-cd "$SHIM_PATH"
 shopt -s nullglob
 
 # Create the prototype shim, then register shims for all known
 # executables.
 create_prototype_shim
 remove_outdated_shims
-make_shims ../versions/*/bin/*
-
-# Restore the previous working directory.
-cd "$OLDPWD"
+make_shims $(list_executable_names | sort -u)
 
 # Allow plugins to register shims.
-for script in $(vimenv-hooks rehash); do
+OLDIFS="$IFS"
+IFS=$'\n' scripts=(`vimenv-hooks rehash`)
+IFS="$OLDIFS"
+
+for script in "${scripts[@]}"; do
   source "$script"
 done
 
-# Change back to the shims directory to install the registered shims
-# and remove stale shims.
-cd "$SHIM_PATH"
 install_registered_shims
 remove_stale_shims

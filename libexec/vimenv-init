@@ -5,6 +5,17 @@
 set -e
 [ -n "$VIMENV_DEBUG" ] && set -x
 
+# Provide vimenv completions
+if [ "$1" = "--complete" ]; then
+  echo -
+  echo --no-rehash
+  echo bash
+  echo fish
+  echo ksh
+  echo zsh
+  exit
+fi
+
 print=""
 no_rehash=""
 for args in "$@"
@@ -22,33 +33,23 @@ done
 
 shell="$1"
 if [ -z "$shell" ]; then
-  shell="$(basename "$SHELL")"
+  shell="$(ps -p "$PPID" -o 'args=' 2>/dev/null || true)"
+  shell="${shell%% *}"
+  shell="${shell##-}"
+  shell="${shell:-$SHELL}"
+  shell="${shell##*/}"
 fi
 
-resolve_link() {
-  $(type -p greadlink readlink | head -1) $1
-}
-
-abs_dirname() {
-  local cwd="$(pwd)"
-  local path="$1"
-
-  while [ -n "$path" ]; do
-    cd "${path%/*}"
-    local name="${path##*/}"
-    path="$(resolve_link "$name" || true)"
-  done
-
-  pwd
-  cd "$cwd"
-}
-
-root="$(abs_dirname "$0")/.."
+root="${0%/*}/.."
 
 if [ -z "$print" ]; then
   case "$shell" in
   bash )
-    profile='~/.bash_profile'
+    if [ -f "${HOME}/.bashrc" ] && [ ! -f "${HOME}/.bash_profile" ]; then
+      profile='~/.bashrc'
+    else
+      profile='~/.bash_profile'
+    fi
     ;;
   zsh )
     profile='~/.zshrc'
@@ -69,10 +70,11 @@ if [ -z "$print" ]; then
     echo
     case "$shell" in
     fish )
-      echo 'status --is-interactive; and soure (vimenv init -|psub)'
+      echo 'vimenv init - | source'
       ;;
     * )
       echo 'eval "$(vimenv init -)"'
+      ;;
     esac
     echo
   } >&2
@@ -82,22 +84,24 @@ fi
 
 mkdir -p "${VIMENV_ROOT}/"{shims,versions}
 
-if [[ ":${PATH}:" != *:"${VIMENV_ROOT}/shims":* ]]; then
-  echo 'export PATH="'${VIMENV_ROOT}'/shims:${PATH}"'
-fi
-
 case "$shell" in
-bash | zsh )
-  echo "source \"$root/completions/vimenv.${shell}\""
-;;
 fish )
   echo "set -gx PATH '${VIMENV_ROOT}/shims' \$PATH"
   echo "set -gx VIMENV_SHELL $shell"
 ;;
+* )
+  echo 'export PATH="'${VIMENV_ROOT}'/shims:${PATH}"'
+  echo "export VIMENV_SHELL=$shell"
+;;
 esac
 
+completion="${root}/completions/vimenv.${shell}"
+if [ -r "$completion" ]; then
+  echo "source '$completion'"
+fi
+
 if [ -z "$no_rehash" ]; then
-  echo 'vimenv rehash 2>/dev/null'
+  echo 'command vimenv rehash 2>/dev/null'
 fi
 
 commands=(`vimenv-commands --sh`)
@@ -141,7 +145,7 @@ cat <<EOS
 
   case "\$command" in
   ${commands[*]})
-    eval "\$(vimenv"sh-\$command" "\$@")";;
+    eval "\$(vimenv "sh-\$command" "\$@")";;
   *)
     command vimenv "\$command" "\$@";;
   esac
