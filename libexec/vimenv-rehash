@@ -34,7 +34,7 @@ release_lock() {
   remove_prototype_shim
 }
 
-if [! -w "$SHIM_PATH" ]; then
+if [ ! -w "$SHIM_PATH" ]; then
   echo "vimenv: cannot rehash: $SHIM_PATH isn't writable"
   exit 1
 fi
@@ -91,9 +91,10 @@ SH
 # of the first shim in the shims directory, assume vimenv has been
 # upgraded and the existing shims need to be removed.
 remove_outdated_shims() {
-  for shim in *; do
+  local shim
+  for shim in "$SHIM_PATH"/*; do
     if ! diff "$PROTOTYPE_SHIM_PATH" "$shim" >/dev/null 2>&1; then
-      for shim in *; do rm -f "$shim"; done
+      rm -f "$SHIM_PATH"/*
     fi
     break
   done
@@ -133,7 +134,7 @@ install_registered_shims() {
   local shim file
   for shim in $registered_shims; do
     file="${SHIM_PATH}/${shim}"
-    [ -e "$shim" ] || cp "$PROTOTYPE_SHIM_PATH" "$file"
+    [ -e "$file" ] || cp "$PROTOTYPE_SHIM_PATH" "$file"
   done
 }
 
